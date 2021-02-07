@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:laundry/injector/injector.dart';
@@ -17,7 +18,8 @@ class AccountInProgress extends AccountState {
 
 class AccountSuccess extends AccountState {
   final AccountAction action;
-  AccountSuccess(this.action);
+  final UserData data;
+  AccountSuccess(this.action, {this.data});
 }
 
 class AccountFailure extends AccountState {
@@ -32,6 +34,8 @@ class AccountEvent {
 }
 
 class AccountBloc extends Bloc<AccountEvent, AccountState> {
+  final CollectionReference _firestore =
+      FirebaseFirestore.instance.collection('user-data');
   final SharedPreferences _sharedPreferences = locator<SharedPreferences>();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
@@ -41,24 +45,28 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
   Stream<AccountState> mapEventToState(AccountEvent event) async* {
     yield AccountInProgress('Logging out...');
 
-    final action = event.action;
+    switch (event.action) {
+      case AccountAction.getProfile:
+        final snapshot = await _firestore
+            .where('uid', isEqualTo: _auth.currentUser.uid)
+            .get();
 
-    if (action == AccountAction.getProfile) {
-      await Future.delayed(Duration(seconds: 1));
-    } else if (action == AccountAction.updateProfile) {
-    } else if (action == AccountAction.signOut) {
-      try {
-        await _auth.signOut();
+        final userData = UserData.fromJson(snapshot.docs.single.data());
+        yield AccountSuccess(event.action, data: userData);
+        break;
+      case AccountAction.updateProfile:
+        break;
+      case AccountAction.signOut:
+        try {
+          await _auth.signOut();
 
-        await _sharedPreferences.clear();
-        await _sharedPreferences.setBool('isAdmin', false);
-      } on FirebaseAuthException catch (e) {
-        yield AccountFailure(e.toString());
-        return;
-      }
+          await _sharedPreferences.clear();
+          yield AccountSuccess(event.action);
+        } on FirebaseAuthException catch (e) {
+          yield AccountFailure(e.toString());
+          return;
+        }
+        break;
     }
-
-    yield AccountSuccess(action);
-    return;
   }
 }

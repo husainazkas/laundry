@@ -18,11 +18,11 @@ class _RegisterState extends State<Register> {
   final FocusNode _emailNode = FocusNode();
   final FocusNode _passNode1 = FocusNode();
   final FocusNode _passNode2 = FocusNode();
-  final FocusNode _cityNode = FocusNode();
-  final _userData = UserData();
+  final _userData = UserData(isDriver: false);
 
   AutovalidateMode _validationMode = AutovalidateMode.disabled;
   bool _agree = false;
+  String _pass;
 
   @override
   void initState() {
@@ -52,7 +52,7 @@ class _RegisterState extends State<Register> {
   void register() {
     if (_validate()) {
       _registerBloc
-        ..add(RegisterEvent(_userData))
+        ..add(RegisterEvent(_userData, _pass))
         ..listen((state) {
           if (state is RegisterFailure) {
             if (state.error.contains('email-already-in-use')) {
@@ -62,7 +62,7 @@ class _RegisterState extends State<Register> {
             dialog('Kesalahan', 'Harap coba lagi nanti.');
           } else if (state is RegisterSuccess) {
             Navigator.pushNamedAndRemoveUntil(
-                context, '/bottom_navbar', (r) => false);
+                context, '/home', (r) => false);
           }
         });
     }
@@ -122,8 +122,6 @@ class _RegisterState extends State<Register> {
                       pass(),
                       SizedBox(height: 12.0),
                       confirm(),
-                      SizedBox(height: 12.0),
-                      city(),
                       agreement(),
                       btnRegister(),
                       backToLogin(),
@@ -234,7 +232,7 @@ class _RegisterState extends State<Register> {
         labelText: 'Kata sandi',
         border: OutlineInputBorder(),
       ),
-      onSaved: (val) => _userData.pass = val,
+      onSaved: (val) => _pass = val,
     );
   }
 
@@ -247,7 +245,7 @@ class _RegisterState extends State<Register> {
       focusNode: _passNode2,
       onFieldSubmitted: (val) {
         _passNode2.unfocus();
-        FocusScope.of(context).requestFocus(_cityNode);
+        if (_agree) register();
       },
       validator: (val) =>
           val == _passText.text ? null : 'Kata sandi tidak cocok.',
@@ -255,25 +253,6 @@ class _RegisterState extends State<Register> {
         labelText: 'Konfirmasi kata sandi',
         border: OutlineInputBorder(),
       ),
-    );
-  }
-
-  Widget city() {
-    return TextFormField(
-      autocorrect: false,
-      validator: (val) => val.isEmpty ? 'Kota tidak boleh kosong.' : null,
-      keyboardType: TextInputType.emailAddress,
-      textInputAction: TextInputAction.next,
-      focusNode: _cityNode,
-      onFieldSubmitted: (val) {
-        _cityNode.unfocus();
-        if (_agree) register();
-      },
-      decoration: InputDecoration(
-        labelText: 'Kota',
-        border: OutlineInputBorder(),
-      ),
-      onSaved: (val) => _userData.city = val.trim(),
     );
   }
 

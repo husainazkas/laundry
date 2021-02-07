@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:laundry/bloc/login_bloc.dart';
-import 'package:laundry/injector/injector.dart';
 import 'package:laundry/ui/widget/circular_loading.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -19,7 +17,6 @@ class _LoginState extends State<Login> {
   AutovalidateMode _validationMode = AutovalidateMode.disabled;
   String _email, _pass;
   bool _obscurePass = true;
-  bool _asAdmin = false;
 
   @override
   void initState() {
@@ -48,12 +45,19 @@ class _LoginState extends State<Login> {
 
   void login() {
     if (_validate()) {
-      _loginBloc.add(LoginEvent(_email, _pass, _asAdmin));
+      _loginBloc
+        ..add(LoginEvent(_email, _pass))
+        ..listen((state) {
+          if (state is LoginFailure) {
+            dialog('Upss..', state.error);
+          } else if (state is LoginSuccess) {
+            Navigator.pushNamedAndRemoveUntil(context, '/home', (r) => false);
+          }
+        });
     }
   }
 
   void dialog(String title, String body) {
-    print('a');
     showDialog(
       context: context,
       builder: (context) {
@@ -79,55 +83,44 @@ class _LoginState extends State<Login> {
     return Scaffold(
       body: BlocProvider<LoginBloc>(
         create: (context) => _loginBloc,
-        child: BlocListener<LoginBloc, LoginState>(
-          listener: (context, state) {
-            if (state is LoginFailure) {
-              print('awok');
-              dialog('Upss..', state.error.message);
-            } else if (state is LoginSuccess) {
-              Navigator.pushNamedAndRemoveUntil(
-                  context, '/bottom_navbar', (r) => false);
-            }
-          },
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              SingleChildScrollView(
-                child: Container(
-                  padding: EdgeInsets.all(20.0),
-                  child: Column(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.only(bottom: 50.0),
-                        child: Center(
-                          child: Text(
-                            "Laundry",
-                            style: TextStyle(
-                              color: Colors.blue[700],
-                              fontSize: 52.0,
-                              fontWeight: FontWeight.bold,
-                            ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            SingleChildScrollView(
+              child: Container(
+                padding: EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.only(bottom: 50.0),
+                      child: Center(
+                        child: Text(
+                          "Laundry",
+                          style: TextStyle(
+                            color: Colors.blue[700],
+                            fontSize: 52.0,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      forms(),
-                    ],
-                  ),
+                    ),
+                    forms(),
+                  ],
                 ),
               ),
-              BlocBuilder<LoginBloc, LoginState>(
-                builder: (context, state) {
-                  if (state is LoginInProgress) {
-                    return WillPopScope(
-                      onWillPop: () async => false,
-                      child: CircularLoading(),
-                    );
-                  }
-                  return Container();
-                },
-              ),
-            ],
-          ),
+            ),
+            BlocBuilder<LoginBloc, LoginState>(
+              builder: (context, state) {
+                if (state is LoginInProgress) {
+                  return WillPopScope(
+                    onWillPop: () async => false,
+                    child: CircularLoading(state.status),
+                  );
+                }
+                return Container();
+              },
+            ),
+          ],
         ),
       ),
     );
@@ -143,7 +136,7 @@ class _LoginState extends State<Login> {
             alignment: Alignment.centerLeft,
             padding: EdgeInsets.symmetric(vertical: 12.0),
             child: Text(
-              'Masuk${_asAdmin ? ' Admin' : ''}',
+              'Masuk',
               style: TextStyle(fontSize: 28.0),
             ),
           ),
@@ -193,26 +186,9 @@ class _LoginState extends State<Login> {
                 ),
               ),
             ),
-            onSaved: (val) => _pass = val.trim(),
+            onSaved: (val) => _pass = val,
           ),
-          Container(
-            alignment: Alignment.topRight,
-            padding: EdgeInsets.only(bottom: 12.0),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(6.0),
-              child: Container(
-                padding: EdgeInsets.all(2.0),
-                child: Text(
-                  'Masuk sebagai ${_asAdmin ? 'pengguna' : 'admin'}',
-                  style: TextStyle(fontSize: 12.0),
-                ),
-              ),
-              onTap: () async {
-                setState(() => _asAdmin = !_asAdmin);
-                await locator<SharedPreferences>().setBool('isAdmin', _asAdmin);
-              },
-            ),
-          ),
+          SizedBox(height: 12.0),
           FlatButton(
             height: 46.0,
             shape: RoundedRectangleBorder(
@@ -230,20 +206,19 @@ class _LoginState extends State<Login> {
               ),
             ),
           ),
-          if (!_asAdmin)
-            Container(
-              padding: EdgeInsets.only(top: 12.0),
-              child: InkWell(
-                onTap: () => Navigator.pushNamed(context, '/register'),
-                borderRadius: BorderRadius.circular(6.0),
-                child: Container(
-                  padding: EdgeInsets.all(2.0),
-                  child: Text(
-                    'Belum memiliki akun? Daftar sekarang.',
-                  ),
+          Container(
+            padding: EdgeInsets.only(top: 12.0),
+            child: InkWell(
+              onTap: () => Navigator.pushNamed(context, '/register'),
+              borderRadius: BorderRadius.circular(6.0),
+              child: Container(
+                padding: EdgeInsets.all(2.0),
+                child: Text(
+                  'Belum memiliki akun? Daftar sekarang.',
                 ),
               ),
             ),
+          ),
         ],
       ),
     );

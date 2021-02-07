@@ -27,6 +27,9 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.0
+  
+  # A carousel slider widget, support infinite scroll and custom child widget.
+  carousel_slider: ^3.0.0
 
   # Flutter plugin for Cloud Firestore, a cloud-hosted, noSQL database
   # with live synchronization and offline support on Android and iOS
@@ -43,9 +46,20 @@ dependencies:
   # Flutter plugin for Firebase Core, enabling connecting to multiple Firebase apps.
   firebase_core: ^0.5.3
 
+  # Open screens/snackbars/dialogs/bottomSheets without context,
+  # manage states and inject dependencies easily with GetX.
+  get: ^3.15.0
+
   # Simple direct Service Locator that allows to decouple the interface from a concrete
   # implementation and to access the concrete implementation from everywhere in your App"
   get_it: ^5.0.4
+
+  # A Flutter plugin for integrating Google Maps in iOS and Android applications.
+  google_maps_flutter: ^1.1.1
+  
+  # Contains code to deal with internationalized/localized messages,
+  # date and number formatting and parsing, bi-directional text, and other internationalization issues.
+  intl: ^0.16.1
 
   # A pdf producer for Dart. It can create pdf files for both web or flutter.
   pdf: ^2.0.0
@@ -57,6 +71,12 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  # Automatically generate code for converting to and from JSON by annotating Dart cplasses.
+  json_serializable: ^3.5.1
+
+  # A build System for Dart code generation and modular compilation.
+  build_runner: ^1.10.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -70,7 +90,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  assets:
+    - assets/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

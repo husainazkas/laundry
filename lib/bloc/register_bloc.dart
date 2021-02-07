@@ -23,12 +23,14 @@ class RegisterFailure extends RegisterState {
 
 class RegisterEvent {
   final UserData userData;
-  RegisterEvent(this.userData);
+  final String pass;
+  RegisterEvent(this.userData, this.pass);
 }
 
 class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
   final CollectionReference _firestore =
       FirebaseFirestore.instance.collection('user-data');
+  final SharedPreferences _storage = locator<SharedPreferences>();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   RegisterBloc(RegisterState initialState) : super(initialState);
@@ -39,23 +41,24 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
 
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
-          email: event.userData.email, password: event.userData.pass);
+          email: event.userData.email, password: event.pass);
 
       yield RegisterInProgress('Menginput data Anda');
 
       await _firestore.add({
         'uid': credential.user.uid,
-        'name': event.userData.name,
-        'phone': event.userData.phone,
-        'email': event.userData.email,
-        'city': event.userData.city,
-      });
+      }..addAll(event.userData.toJson()));
     } catch (e) {
       print(e);
       yield RegisterFailure(e.toString());
       return;
     }
-    await locator<SharedPreferences>().setBool('isAdmin', false);
+
+    await _storage.setString('name', event.userData.name);
+    await _storage.setString('email', event.userData.email);
+    await _storage.setString('phone', event.userData.phone);
+    await _storage.setBool('isDriver', event.userData.isDriver);
+
     yield RegisterSuccess();
   }
 }
