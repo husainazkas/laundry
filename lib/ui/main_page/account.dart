@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:laundry/bloc/account_bloc.dart';
 import 'package:laundry/model/map_account_model.dart';
+import 'package:laundry/storage/storage.dart';
 import 'package:laundry/ui/widget/account_card.dart';
+import 'package:laundry/utils/validator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Account extends StatefulWidget {
   @override
@@ -10,31 +13,39 @@ class Account extends StatefulWidget {
 }
 
 class _AccountState extends State<Account> {
+  final GlobalKey<FormState> _key = GlobalKey<FormState>();
   final AccountBloc _accountBloc = AccountBloc(AccountInitial());
+  final SharedPreferences _storage = locator<SharedPreferences>();
 
-  // bool _editing = false;
+  MapAccount _mapAccount = MapAccount(
+    key: List.from([
+      'Nama',
+      'No. Telp',
+      'Email',
+    ], growable: false),
+    value: List(3),
+  );
+
+  bool _editing = false;
+  List<String> _tempUpdates = [];
+  AutovalidateMode _avm = AutovalidateMode.disabled;
 
   @override
   void initState() {
     super.initState();
-    _accountBloc.add(AccountEvent(AccountAction.getProfile));
+    _mapAccount.value.setAll(0, [
+      _storage.getString(keyName),
+      _storage.getString(keyPhone),
+      _storage.getString(keyEmail),
+    ]);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Akun Anda',
-          style: TextStyle(color: Colors.black),
-        ),
+        title: Text('Akun Anda'),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.blue),
-          onPressed: () => Navigator.pop(context),
-          tooltip: 'Kembali',
-        ),
       ),
       body: BlocProvider<AccountBloc>(
         create: (context) => _accountBloc,
@@ -61,17 +72,25 @@ class _AccountState extends State<Account> {
               );
             } else {
               Navigator.pop(context);
-            }
-            if (state is AccountFailure) {
-              Scaffold.of(context).showSnackBar(SnackBar(
-                content: Text('Operasi ini gagal.'),
-              ));
-            } else if (state is AccountSuccess) {
-              if (state.action == AccountAction.signOut) {
-                Navigator.pushNamedAndRemoveUntil(
-                    context, '/login', (r) => false);
-              } else if (state.action == AccountAction.getProfile) {
-              } else if (state.action == AccountAction.updateProfile) {}
+              if (state is AccountFailure) {
+                Scaffold.of(context).showSnackBar(SnackBar(
+                  content: Text('Operasi ini gagal.'),
+                ));
+              } else if (state is AccountSuccess) {
+                if (state.data == null) {
+                  Navigator.pushNamedAndRemoveUntil(
+                      context, '/login', (r) => false);
+                  return;
+                }
+                _tempUpdates.clear();
+                setState(() {
+                  _mapAccount.value.setAll(0, [
+                    state.data.name,
+                    state.data.phone,
+                    state.data.email,
+                  ]);
+                });
+              }
             }
           },
           child: SingleChildScrollView(
@@ -84,57 +103,92 @@ class _AccountState extends State<Account> {
                       color: Colors.grey[300],
                       borderRadius: BorderRadius.circular(16.0),
                     ),
-                    child: Stack(
-                      children: [
-                        Container(
-                          width: double.infinity,
-                          height: 400.0,
-                          padding: EdgeInsets.all(14.0),
-                          child: BlocBuilder<AccountBloc, AccountState>(
-                            builder: (context, state) {
-                              if (state is AccountSuccess) {
-                                if (state.action == AccountAction.getProfile) {
-                                  final userData = state.data;
-                                  final mapAccount = MapAccount(
-                                    key: [
-                                      'Nama',
-                                      'No. Telp',
-                                      'Email',
-                                    ],
-                                    value: [
-                                      userData.name,
-                                      userData.phone,
-                                      userData.email,
-                                    ],
-                                  );
-                                  return AccountCard(mapAccount);
-                                } else {
-                                  return Container();
-                                }
-                              } else {
-                                return Container();
-                              }
-                            },
+                    child: Form(
+                      key: _key,
+                      autovalidateMode: _avm,
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: double.infinity,
+                            height: 400.0,
+                            padding: EdgeInsets.all(14.0),
+                            child: AccountCard(
+                              _mapAccount,
+                              _editing,
+                              editor: List.generate(_mapAccount.key.length,
+                                  (index) {
+                                final List<TextInputType> inputType = [
+                                  TextInputType.name,
+                                  TextInputType.phone,
+                                  TextInputType.emailAddress
+                                ];
+
+                                final List<FocusNode> node = [
+                                  FocusNode(),
+                                  FocusNode(),
+                                  FocusNode(),
+                                ];
+
+                                return TextFormField(
+                                  initialValue: _tempUpdates.isNotEmpty
+                                      ? _tempUpdates[index]
+                                      : _mapAccount.value[index],
+                                  validator: (val) => val.isEmpty
+                                      ? '${_mapAccount.key[index]} tidak boleh kosong.'
+                                      : _mapAccount.key[index] == 'Email' &&
+                                              !Validator.emailCheck(val)
+                                          ? 'Email yang Anda masukkan salah.'
+                                          : null,
+                                  keyboardType: inputType[index],
+                                  focusNode: node[index],
+                                  textInputAction: TextInputAction.done,
+                                  onFieldSubmitted: (val) =>
+                                      node[index].unfocus(),
+                                  onSaved: (val) =>
+                                      _tempUpdates.add(val.trim()),
+                                );
+                              }),
+                            ),
                           ),
-                        ),
-                        // Row(
-                        //   mainAxisAlignment: MainAxisAlignment.end,
-                        //   children: [
-                        //     FlatButton(
-                        //       minWidth: 12.0,
-                        //       shape: CircleBorder(),
-                        //       padding: EdgeInsets.all(12.0),
-                        //       onPressed: () {
-                        //         setState(() => _editing = !_editing);
-                        //         if (!_editing) {
-                        //           print('Submit.');
-                        //         }
-                        //       },
-                        //       child: Icon(_editing ? Icons.check : Icons.edit),
-                        //     ),
-                        //   ],
-                        // ),
-                      ],
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              if (_editing)
+                                FlatButton(
+                                  minWidth: 12.0,
+                                  shape: CircleBorder(),
+                                  padding: EdgeInsets.all(12.0),
+                                  onPressed: () =>
+                                      setState(() => _editing = !_editing),
+                                  child: Icon(Icons.close),
+                                ),
+                              FlatButton(
+                                minWidth: 12.0,
+                                shape: CircleBorder(),
+                                padding: EdgeInsets.all(12.0),
+                                onPressed: () {
+                                  if (_editing) {
+                                    if (_key.currentState.validate()) {
+                                      _key.currentState.save();
+                                      _accountBloc.add(AccountEvent(
+                                        editing: true,
+                                        value: _tempUpdates,
+                                      ));
+                                      setState(() => _editing = !_editing);
+                                    } else {
+                                      _avm = AutovalidateMode.onUserInteraction;
+                                    }
+                                  } else {
+                                    setState(() => _editing = !_editing);
+                                  }
+                                },
+                                child:
+                                    Icon(_editing ? Icons.check : Icons.edit),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   Container(
@@ -144,8 +198,7 @@ class _AccountState extends State<Account> {
                       padding: EdgeInsets.symmetric(horizontal: 36.0),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12.0)),
-                      onPressed: () =>
-                          _accountBloc.add(AccountEvent(AccountAction.signOut)),
+                      onPressed: () => _accountBloc.add(AccountEvent()),
                       color: Colors.redAccent[100],
                       child: Text(
                         'Keluar',

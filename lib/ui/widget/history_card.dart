@@ -6,11 +6,11 @@ class HistoryCard extends StatelessWidget {
   final List<OrderDetails> items;
   HistoryCard(this.items);
 
+  final _numFormat = NumberFormat('#,###', 'id_ID');
+  final _dateFormat = DateFormat('dd/MM/yyyy');
+
   @override
   Widget build(BuildContext context) {
-    final _numFormat = NumberFormat('#,###', 'id_ID');
-    final _dateFormat = DateFormat('dd/MM/yyyy');
-
     return Container(
       height: 0.0,
       child: ListView.builder(

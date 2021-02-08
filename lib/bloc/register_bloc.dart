@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:laundry/injector/injector.dart';
+import 'package:laundry/storage/storage.dart';
 import 'package:laundry/model/user_data_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -54,10 +54,10 @@ class RegisterBloc extends Bloc<RegisterEvent, RegisterState> {
       return;
     }
 
-    await _storage.setString('name', event.userData.name);
-    await _storage.setString('email', event.userData.email);
-    await _storage.setString('phone', event.userData.phone);
-    await _storage.setBool('isDriver', event.userData.isDriver);
+    await _storage.setString(keyName, event.userData.name);
+    await _storage.setString(keyEmail, event.userData.email);
+    await _storage.setString(keyPhone, event.userData.phone);
+    await _storage.setBool(keyDriver, event.userData.isDriver);
 
     yield RegisterSuccess();
   }

@@ -7,3 +7,8 @@ Future<void> setupLocator() async {
   SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
   locator.registerSingleton<SharedPreferences>(sharedPreferences);
 }
+
+String get keyName => 'name';
+String get keyEmail => 'email';
+String get keyPhone => 'phone';
+String get keyDriver => 'isDriver';

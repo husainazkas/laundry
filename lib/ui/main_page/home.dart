@@ -1,8 +1,10 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:laundry/storage/storage.dart';
 import 'package:laundry/model/home_item_model.dart';
 import 'package:laundry/ui/main_page/order_form.dart';
 import 'package:laundry/ui/widget/hero_dialog.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Home extends StatefulWidget {
   @override
@@ -11,6 +13,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final CarouselController _carouselController = CarouselController();
+  final SharedPreferences _storage = locator<SharedPreferences>();
   final _menuItem = [
     HomeItem(
       icon: Icons.local_laundry_service,
@@ -22,16 +25,6 @@ class _HomeState extends State<Home> {
       label: 'Hanya Setrika',
       routeName: '/order_form',
     ),
-    HomeItem(
-      icon: Icons.shopping_bag,
-      label: 'Riwayat',
-      routeName: '/history',
-    ),
-    HomeItem(
-      icon: Icons.person,
-      label: 'Akun',
-      routeName: '/account',
-    ),
   ];
 
   final _ads = [
@@ -39,6 +32,8 @@ class _HomeState extends State<Home> {
     'https://cdn1-production-images-kly.akamaized.net/PWQ_iCfc-PXUgf_qL8iotQJpRAI=/673x379/smart/filters:quality(75):strip_icc():format(jpeg)/kly-media-production/medias/3175583/original/092818600_1594346182-row-industrial-laundry-machines-laundromat-public-laundromat-with-laundry-basket-thailand_28914-1091.jpg',
     'https://image-cdn.medkomtek.com/fpRidbB-Vkimhte7spZbulumt_M=/673x379/smart/klikdokter-media-buckets/medias/1511266/original/047999800_1487357530-rumah-sehat_Steam_Laundry_Menurunkan_Risiko_Penyakit_Kulit.jpg',
   ];
+
+  // final _ads = ['assets/3.PNG', 'assets/5.PNG', 'assets/test.png'];
 
   int _indexAds = 0;
 
@@ -50,34 +45,33 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        toolbarHeight: kToolbarHeight + 32.0,
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Selamat datang,\n${_storage.getString(keyName)}',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.0,
+              ),
+            ),
+            Text(
+              'Laundry',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 42.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            SafeArea(
-              child: Container(
-                color: Colors.white,
-                padding: EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Selamat datang,\nUser',
-                      style: TextStyle(fontSize: 16.0),
-                    ),
-                    Text(
-                      'Laundry',
-                      style: TextStyle(
-                        color: Colors.blue[700],
-                        fontSize: 42.0,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
             Container(
-              color: Colors.white,
               child: Stack(
                 alignment: AlignmentDirectional.bottomCenter,
                 children: [
@@ -87,20 +81,27 @@ class _HomeState extends State<Home> {
                     options: CarouselOptions(
                       autoPlay: true,
                       viewportFraction: 1.0,
+                      aspectRatio: 4 / 3,
                       autoPlayInterval: Duration(seconds: 6),
                       onPageChanged: (index, reason) {
                         setState(() => _indexAds = index);
                       },
                     ),
                     itemBuilder: (context, index, realIndex) {
-                      return Card(
+                      return Container(
                         child: InkWell(
                           onTap: () {
                             Navigator.push(context, HeroDialog(
                               builder: (context) {
                                 return Hero(
                                   tag: _ads[index].hashCode,
-                                  child: Image.network(_ads[index]),
+                                  child: Image.network(
+                                    _ads[index],
+                                    errorBuilder:
+                                        (context, exception, stacktrace) {
+                                      return Container();
+                                    },
+                                  ),
                                 );
                               },
                             ));
@@ -110,6 +111,11 @@ class _HomeState extends State<Home> {
                             child: Image.network(
                               _ads[index],
                               fit: BoxFit.cover,
+                              errorBuilder: (context, exception, stacktrace) {
+                                return Container(
+                                  color: Colors.blue[200],
+                                );
+                              },
                             ),
                           ),
                         ),
@@ -137,10 +143,11 @@ class _HomeState extends State<Home> {
               ),
             ),
             Container(
-              width: 300.0,
-              height: 300.0,
+              width: MediaQuery.of(context).size.width,
+              height: 120.0,
+              margin: EdgeInsets.all(32.0),
               child: GridView.builder(
-                padding: EdgeInsets.all(20.0),
+                padding: EdgeInsets.all(8.0),
                 physics: NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:laundry/bloc/register_bloc.dart';
 import 'package:laundry/model/user_data_model.dart';
 import 'package:laundry/ui/widget/circular_loading.dart';
+import 'package:laundry/utils/validator.dart';
 
 class Register extends StatefulWidget {
   @override
@@ -29,16 +30,6 @@ class _RegisterState extends State<Register> {
     super.initState();
   }
 
-  bool _emailCheck(String text) {
-    Pattern pattern =
-        r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-    RegExp regex = RegExp(pattern);
-    if (!regex.hasMatch(text)) {
-      return false;
-    }
-    return true;
-  }
-
   bool _validate() {
     final state = _formKey.currentState;
     if (state.validate()) {
@@ -62,7 +53,7 @@ class _RegisterState extends State<Register> {
             dialog('Kesalahan', 'Harap coba lagi nanti.');
           } else if (state is RegisterSuccess) {
             Navigator.pushNamedAndRemoveUntil(
-                context, '/home', (r) => false);
+                context, '/bottom_navbar', (r) => false);
           }
         });
     }
@@ -194,7 +185,7 @@ class _RegisterState extends State<Register> {
       autocorrect: false,
       validator: (val) => val.isEmpty
           ? 'Email tidak boleh kosong.'
-          : _emailCheck(val)
+          : Validator.emailCheck(val)
               ? null
               : 'Email yang Anda masukkan salah.',
       keyboardType: TextInputType.emailAddress,

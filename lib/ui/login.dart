@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:laundry/bloc/login_bloc.dart';
 import 'package:laundry/ui/widget/circular_loading.dart';
+import 'package:laundry/utils/validator.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -23,16 +24,6 @@ class _LoginState extends State<Login> {
     super.initState();
   }
 
-  bool _emailCheck(String text) {
-    Pattern pattern =
-        r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-    RegExp regex = RegExp(pattern);
-    if (!regex.hasMatch(text)) {
-      return false;
-    }
-    return true;
-  }
-
   bool _validate() {
     final state = _formKey.currentState;
     if (state.validate()) {
@@ -51,7 +42,7 @@ class _LoginState extends State<Login> {
           if (state is LoginFailure) {
             dialog('Upss..', state.error);
           } else if (state is LoginSuccess) {
-            Navigator.pushNamedAndRemoveUntil(context, '/home', (r) => false);
+            Navigator.pushNamedAndRemoveUntil(context, '/bottom_navbar', (r) => false);
           }
         });
     }
@@ -144,7 +135,7 @@ class _LoginState extends State<Login> {
             autocorrect: false,
             validator: (val) => val.isEmpty
                 ? 'Email tidak boleh kosong.'
-                : _emailCheck(val)
+                : Validator.emailCheck(val)
                     ? null
                     : 'Email yang Anda masukkan salah.',
             keyboardType: TextInputType.emailAddress,
@@ -208,15 +199,22 @@ class _LoginState extends State<Login> {
           ),
           Container(
             padding: EdgeInsets.only(top: 12.0),
-            child: InkWell(
-              onTap: () => Navigator.pushNamed(context, '/register'),
-              borderRadius: BorderRadius.circular(6.0),
-              child: Container(
-                padding: EdgeInsets.all(2.0),
-                child: Text(
-                  'Belum memiliki akun? Daftar sekarang.',
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text('Belum memiliki akun? '),
+                InkWell(
+                  onTap: () => Navigator.pushNamed(context, '/register'),
+                  borderRadius: BorderRadius.circular(6.0),
+                  child: Container(
+                    padding: EdgeInsets.all(2.0),
+                    child: Text(
+                      'Daftar sekarang.',
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],

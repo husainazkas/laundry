@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:laundry/injector/injector.dart';
+import 'package:laundry/storage/storage.dart';
 import 'package:laundry/model/user_data_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -61,10 +61,10 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     }
 
     final userData = UserData.fromJson(data);
-    await _storage.setString('name', userData.name);
-    await _storage.setString('email', userData.email);
-    await _storage.setString('phone', userData.phone);
-    await _storage.setBool('isDriver', userData.isDriver);
+    await _storage.setString(keyName, userData.name);
+    await _storage.setString(keyEmail, userData.email);
+    await _storage.setString(keyPhone, userData.phone);
+    await _storage.setBool(keyDriver, userData.isDriver);
 
     yield LoginSuccess();
   }

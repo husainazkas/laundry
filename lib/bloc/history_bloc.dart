@@ -26,8 +26,6 @@ class HistoryEvent {
 }
 
 class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
-  // final FirebaseAuth _auth = FirebaseAuth.instance;
-  // final SharedPreferences _storage = locator<SharedPreferences>();
   final CollectionReference _firestore =
       FirebaseFirestore.instance.collection('orders');
 
@@ -42,7 +40,6 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
     List<OrderDetails> canceled = [];
 
     final snapshot = await _firestore
-        // .where('uid', isEqualTo: _auth.currentUser.uid)
         .orderBy('start_date', descending: event.sort == Sort.desc)
         .get();
 

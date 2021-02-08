@@ -3,8 +3,14 @@ import 'package:laundry/model/map_account_model.dart';
 
 class AccountCard extends StatelessWidget {
   final MapAccount mapAccount;
+  final bool editing;
+  final List<TextFormField> editor;
 
-  AccountCard(this.mapAccount);
+  AccountCard(
+    this.mapAccount,
+    this.editing, {
+    this.editor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +33,15 @@ class AccountCard extends StatelessWidget {
               SizedBox(
                 height: 4.0,
               ),
-              Text(
-                mapAccount.value[index],
-                textScaleFactor: 1.3,
-              ),
+              !editing
+                  ? Padding(
+                    padding: EdgeInsets.symmetric(vertical: 14.0),
+                    child: Text(
+                        mapAccount.value[index],
+                        textScaleFactor: 1.15,
+                      ),
+                  )
+                  : editor[index],
             ],
           ),
         );

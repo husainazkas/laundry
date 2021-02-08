@@ -1,11 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:laundry/injector/injector.dart';
+import 'package:laundry/storage/storage.dart';
 import 'package:laundry/model/user_data_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-enum AccountAction { getProfile, updateProfile, signOut }
 
 abstract class AccountState {}
 
@@ -17,9 +15,8 @@ class AccountInProgress extends AccountState {
 }
 
 class AccountSuccess extends AccountState {
-  final AccountAction action;
   final UserData data;
-  AccountSuccess(this.action, {this.data});
+  AccountSuccess(this.data);
 }
 
 class AccountFailure extends AccountState {
@@ -28,9 +25,9 @@ class AccountFailure extends AccountState {
 }
 
 class AccountEvent {
-  final AccountAction action;
-  final UserData userData;
-  AccountEvent(this.action, {this.userData});
+  final bool editing;
+  final List<String> value;
+  AccountEvent({this.editing = false, this.value});
 }
 
 class AccountBloc extends Bloc<AccountEvent, AccountState> {
@@ -44,29 +41,43 @@ class AccountBloc extends Bloc<AccountEvent, AccountState> {
   @override
   Stream<AccountState> mapEventToState(AccountEvent event) async* {
     yield AccountInProgress('Logging out...');
+    UserData userData;
 
-    switch (event.action) {
-      case AccountAction.getProfile:
-        final snapshot = await _firestore
+    if (event.editing) {
+      userData = UserData(
+        name: event.value[0],
+        phone: event.value[1],
+        email: event.value[2],
+      );
+
+      try {
+        if (_auth.currentUser.email != userData.email) {
+          await _auth.currentUser.updateEmail(userData.email);
+        }
+
+        final doc = await _firestore
             .where('uid', isEqualTo: _auth.currentUser.uid)
             .get();
+        await doc.docs.single.reference
+            .update(userData.toJson()..remove(keyDriver));
 
-        final userData = UserData.fromJson(snapshot.docs.single.data());
-        yield AccountSuccess(event.action, data: userData);
-        break;
-      case AccountAction.updateProfile:
-        break;
-      case AccountAction.signOut:
-        try {
-          await _auth.signOut();
-
-          await _sharedPreferences.clear();
-          yield AccountSuccess(event.action);
-        } on FirebaseAuthException catch (e) {
-          yield AccountFailure(e.toString());
-          return;
-        }
-        break;
+        _sharedPreferences.setString(keyName, userData.name);
+        _sharedPreferences.setString(keyPhone, userData.phone);
+        _sharedPreferences.setString(keyEmail, userData.email);
+      } catch (e) {
+        yield AccountFailure(e.toString());
+        return;
+      }
+    } else {
+      try {
+        await _auth.signOut();
+        await _sharedPreferences.clear();
+      } on FirebaseAuthException catch (e) {
+        yield AccountFailure(e.message);
+        return;
+      }
     }
+
+    yield AccountSuccess(userData);
   }
 }

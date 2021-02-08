@@ -17,7 +17,7 @@ class _HistoryState extends State<History> with SingleTickerProviderStateMixin {
     'Selesai',
     'Batal'
   ];
-  
+
   TabController _controller;
   int _tabIndex = 0;
   Sort _sort = Sort.desc;
@@ -46,32 +46,22 @@ class _HistoryState extends State<History> with SingleTickerProviderStateMixin {
           controller: _controller,
           labelPadding: EdgeInsets.all(14.0),
           isScrollable: true,
-          labelColor: Colors.blue,
+          indicatorColor: Colors.white,
           onTap: (index) => setState(() => _tabIndex = index),
           tabs: List.generate(_tab.length, (index) {
             return Text(
               _tab[index],
               style: TextStyle(
-                color: _tabIndex == index ? Colors.blue : Colors.black,
                 fontWeight: _tabIndex == index ? FontWeight.bold : null,
               ),
             );
           }),
         ),
-        title: Text(
-          'Riwayat Pemesanan',
-          style: TextStyle(color: Colors.black),
-        ),
+        title: Text('Riwayat Pemesanan'),
         centerTitle: true,
-        backgroundColor: Colors.white,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.blue),
-          onPressed: () => Navigator.pop(context),
-          tooltip: 'Kembali',
-        ),
         actions: [
           PopupMenuButton<Sort>(
-            icon: Icon(Icons.more_vert, color: Colors.blue),
+            icon: Icon(Icons.more_vert),
             onSelected: (value) {
               _sort = value;
               _historyBloc.add(HistoryEvent(value));

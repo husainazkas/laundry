@@ -1,10 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:laundry/injector/injector.dart';
-import 'package:laundry/ui/main_page/account.dart';
-import 'package:laundry/ui/main_page/history.dart';
-import 'package:laundry/ui/main_page/home.dart';
+import 'package:laundry/storage/storage.dart';
+import 'package:laundry/ui/main_page/bottom_navbar.dart';
 import 'package:laundry/ui/login.dart';
 import 'package:laundry/ui/register.dart';
 
@@ -32,13 +30,11 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: _auth.currentUser != null ? Home() : Login(),
+      home: _auth.currentUser != null ? BottomNavBar() : Login(),
       routes: {
         '/login': (context) => Login(),
         '/register': (context) => Register(),
-        '/home': (context) => Home(),
-        '/history': (context) => History(),
-        '/account': (context) => Account(),
+        '/bottom_navbar': (context) => BottomNavBar(),
       },
     );
   }
